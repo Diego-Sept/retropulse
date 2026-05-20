@@ -1,0 +1,80 @@
+@media print {
+  /* Hide UI chrome */
+  nav, .sidebar, button, form, .no-print,
+  .dashboardLayout, [class*="sidebar"], [class*="nav"],
+  [class*="cardForm"], [class*="deleteBtn"], [class*="clusterButton"] {
+    display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+
+  /* Reset backgrounds */
+  * {
+    background: var(--color-surface) !important;
+    color: var(--color-text) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Board grid - stack columns vertically on print */
+  [class*="board"] {
+    display: block !important;
+  }
+
+  /* Each column gets its own page section */
+  [class*="column"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: var(--space-5);
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: auto !important;
+  }
+
+  /* Column headers */
+  [class*="header"] {
+    border-top: 2px solid var(--color-text) !important;
+  }
+
+  [class*="title"] {
+    font-size: var(--text-xl) !important;
+    font-weight: bold !important;
+  }
+
+  /* Cards */
+  [class*="card"] {
+    border: 1px solid var(--color-border) !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: var(--space-1) !important;
+    padding: var(--space-2) !important;
+  }
+
+  [class*="content"] {
+    font-size: var(--text-sm) !important;
+  }
+
+  /* Count badges */
+  [class*="count"] {
+    border: 1px solid var(--color-text-muted) !important;
+  }
+
+  /* Footer */
+  [class*="container"] > [class*="header"] {
+    margin-bottom: var(--space-3) !important;
+  }
+
+  /* Add retro scrum branding at bottom */
+  [class*="container"]::after {
+    content: "Generado por Retro Scrum";
+    display: block;
+    text-align: center;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted) !important;
+    margin-top: var(--space-5);
+  }
+}

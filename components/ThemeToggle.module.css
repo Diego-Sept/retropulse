@@ -1,0 +1,58 @@
+.toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-text-muted);
+}
+
+:global(.dark) .toggle {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: transparent;
+}
+
+:global(.dark) .toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.icon {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+  color: #92400e;
+}
+
+:global(.dark) .sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0);
+}
+
+.moon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0);
+  color: #a78bfa;
+}
+
+:global(.dark) .moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
