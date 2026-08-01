@@ -115,3 +115,81 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { salaId: string; tarjetaId: string } },
+) {
+  try {
+    const authUser = await getAuthUser(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    }
+
+    const supabase = getSupabaseServerClient();
+
+    // Verify sala belongs to user's empresa via equipo
+    const { data: sala, error: salaError } = await supabase
+      .from('salas')
+      .select('*, equipos!inner(empresa_id)')
+      .eq('id', params.salaId)
+      .maybeSingle();
+
+    if (salaError || !sala) {
+      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
+    }
+
+    const equipoData = sala.equipos as { empresa_id: string };
+    if (equipoData.empresa_id !== authUser.empresa_id) {
+      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
+    }
+
+    // Verify user is member of the sala's equipo (or global admin)
+    const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
+    if (!isGlobalAdmin) {
+      const { data: membership, error: memError } = await supabase
+        .from('usuarios_equipo')
+        .select('id')
+        .eq('equipo_id', sala.equipo_id)
+        .eq('usuario_id', authUser.id)
+        .maybeSingle();
+
+      if (memError || !membership) {
+        return NextResponse.json({ error: 'No tienes acceso a esta sala' }, { status: 403 });
+      }
+    }
+
+    // Verify tarjeta exists and belongs to this sala
+    const { data: tarjeta, error: tarjetaError } = await supabase
+      .from('tarjetas')
+      .select('id')
+      .eq('id', params.tarjetaId)
+      .eq('sala_id', params.salaId)
+      .maybeSingle();
+
+    if (tarjetaError || !tarjeta) {
+      return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
+    }
+
+    const { error: deleteError } = await supabase
+      .from('tarjetas')
+      .delete()
+      .eq('id', params.tarjetaId);
+
+    if (deleteError) {
+      console.error('Error deleting tarjeta:', deleteError);
+      return NextResponse.json(
+        { error: 'Error al eliminar la tarjeta' },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('DELETE /api/salas/[salaId]/tarjetas/[tarjetaId] error:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 },
+    );
+  }
+}

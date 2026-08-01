@@ -82,6 +82,28 @@ export function useRealtimeCards(salaId: string) {
           deleteTarjeta(oldCard.id);
         },
       )
+      // Subscribe to grupos table changes
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'grupos',
+          filter: `sala_id=eq.${salaId}`,
+        },
+        () => {
+          // Re-fetch all grupos on any change (INSERT/UPDATE/DELETE)
+          const client = getSupabaseBrowserClient();
+          client
+            .from('grupos')
+            .select('*')
+            .eq('sala_id', salaId)
+            .then(
+              ({ data }) => { if (data) setGrupos(data); },
+              () => {}
+            );
+        },
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           console.log('Realtime connected for sala:', salaId);

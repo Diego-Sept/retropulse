@@ -11,7 +11,7 @@ interface CardFormProps {
 export function CardForm({ salaId, columnaId }: CardFormProps) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { addTarjeta } = useBoard();
+  const { addTarjeta, deleteTarjeta } = useBoard();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +43,8 @@ export function CardForm({ salaId, columnaId }: CardFormProps) {
       });
 
       if (!res.ok) {
-        // Revert optimistic on failure — the Realtime subscription will handle correct state
+        // Revert optimistic card on failure
+        deleteTarjeta(tempId);
         console.error('Failed to create card');
       }
     } catch (err) {

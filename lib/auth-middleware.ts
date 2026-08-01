@@ -31,8 +31,8 @@ export async function getAuthUser(request: NextRequest): Promise<AuthUser | null
 
   return {
     id: payload.user_id,
-    email: '',
-    nombre: '',
+    email: payload.email || '',
+    nombre: payload.nombre || '',
     rol_global: payload.rol_global,
     empresa_id: payload.empresa_id,
     suscripcion_id: payload.suscripcion_id,

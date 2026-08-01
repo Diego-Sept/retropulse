@@ -14,6 +14,8 @@ export interface JwtPayload {
   empresa_id: string;
   rol_global: Usuario['rol_global'];
   suscripcion_id: string;
+  nombre: string;
+  email: string;
   iat: number;
   exp: number;
 }

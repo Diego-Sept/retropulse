@@ -43,6 +43,8 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set('x-empresa-id', payload.empresa_id);
   requestHeaders.set('x-rol-global', payload.rol_global);
   requestHeaders.set('x-suscripcion-id', payload.suscripcion_id);
+  requestHeaders.set('x-user-nombre', payload.nombre || '');
+  requestHeaders.set('x-user-email', payload.email || '');
 
   return NextResponse.next({
     request: { headers: requestHeaders },

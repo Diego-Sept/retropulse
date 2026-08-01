@@ -10,8 +10,8 @@ const COLUMN_NAMES: Record<number, string> = {
   4: 'Acciones a tomar',
 };
 
-const VIOLETA = [108, 92, 231] as const;
-const GRIS_CLARO = [170, 170, 170] as const;
+const VIOLETA = [108, 92, 231];
+const GRIS_CLARO = [170, 170, 170];
 
 interface ExportMenuProps {
   salaNombre: string;

@@ -24,18 +24,22 @@ export function Card({ tarjeta, columnaId, grupoColor, isSelected, onToggleSelec
     setDrag(null, null);
   };
 
+  const { deleteTarjeta } = useBoard();
+
   const handleDelete = async () => {
     if (!confirm('¿Eliminar esta tarjeta?')) return;
     try {
+      // Optimistic removal from UI
+      deleteTarjeta(tarjeta.id);
+
       const res = await fetch(
         `/api/salas/${tarjeta.sala_id}/tarjetas/${tarjeta.id}`,
-        {
-          method: 'DELETE',
-        },
+        { method: 'DELETE' },
       );
       if (!res.ok) throw new Error('Error al eliminar');
     } catch (err) {
       console.error('Delete error:', err);
+      // Re-fetch on failure — realtime subscription will handle the rollback
     }
   };
 

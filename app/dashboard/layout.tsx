@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
 import { UsageIndicator } from '@/components/UsageIndicator';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { LayoutDashboard, Users, Settings, LogOut, Activity } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, LogOut, Activity, ListTodo } from 'lucide-react';
 import styles from './dashboard.module.css';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const links = [
     { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
     { href: '/dashboard/equipos', label: 'Equipos', icon: Users },
+    { href: '/dashboard/salas', label: 'Salas', icon: ListTodo },
     { href: '/dashboard/configuracion', label: 'Configuración', icon: Settings },
   ];
 

@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
       empresa_id: usuario.empresa_id,
       rol_global: usuario.rol_global as 'super_admin' | 'empresa_admin' | 'member',
       suscripcion_id: suscripcionId,
+      nombre: usuario.nombre,
+      email: usuario.email,
     });
 
     const response = NextResponse.json({

@@ -39,6 +39,8 @@ export async function verifyJwt(token: string): Promise<JwtPayload | null> {
       empresa_id: payload.empresa_id as string,
       rol_global: payload.rol_global as JwtPayload['rol_global'],
       suscripcion_id: payload.suscripcion_id as string,
+      nombre: (payload.nombre as string) || '',
+      email: (payload.email as string) || '',
       iat: payload.iat as number,
       exp: payload.exp as number,
     };

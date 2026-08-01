@@ -192,7 +192,7 @@ export default function LandingPage() {
                 <li>1 equipo</li>
                 <li>Salas ilimitadas</li>
                 <li>Exportación MD y PDF</li>
-                <li>Agrupación IA (100/mes)</li>
+                <li>Agrupación IA (5/mes)</li>
               </ul>
               <Link href="/register" className={styles.planBtn}>Empezar gratis</Link>
             </div>
@@ -204,10 +204,10 @@ export default function LandingPage() {
                 <span className={styles.planPeriod}>/mes</span>
               </div>
               <ul className={styles.planFeatures}>
-                <li>Equipos ilimitados</li>
+                <li>1 equipo</li>
                 <li>Salas ilimitadas</li>
                 <li>Exportación MD y PDF</li>
-                <li>Agrupación IA ilimitada</li>
+                <li>Agrupación IA (30/mes)</li>
               </ul>
               <Link href="/register" className={`${styles.planBtn} ${styles.planBtnPrimary}`}>Elegir Pro</Link>
             </div>
@@ -218,7 +218,9 @@ export default function LandingPage() {
                 <span className={styles.planPeriod}>/mes</span>
               </div>
               <ul className={styles.planFeatures}>
-                <li>Todo lo de Pro</li>
+                <li>10 equipos</li>
+                <li>Salas ilimitadas</li>
+                <li>Agrupación IA (500/mes)</li>
                 <li>SSO / SAML</li>
                 <li>Soporte prioritario</li>
                 <li>Auditoría de retrospectivas</li>
