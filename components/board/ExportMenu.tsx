@@ -122,6 +122,9 @@ export function ExportMenu({ salaNombre }: ExportMenuProps) {
         writeText(grupo.nombre, 13, { bold: true, color: VIOLETA });
         for (const card of grupoCards) {
           writeText(card.contenido, 10, { indent: 5, prefix: '• ' });
+          if (card.autor_nombre) {
+            writeText(card.autor_nombre, 7, { indent: 11, color: GRIS_CLARO });
+          }
         }
         y += 2;
       }
@@ -137,6 +140,12 @@ export function ExportMenu({ salaNombre }: ExportMenuProps) {
             indent: columnGroups.length > 0 ? 5 : 0,
             prefix: '• ',
           });
+          if (card.autor_nombre) {
+            writeText(card.autor_nombre, 7, {
+              indent: columnGroups.length > 0 ? 11 : 6,
+              color: GRIS_CLARO,
+            });
+          }
         }
         y += 3;
       }

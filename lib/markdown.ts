@@ -41,7 +41,7 @@ export function generateMarkdown(
       if (grupoCards.length === 0) continue;
       md += `### ${grupo.nombre}\n\n`;
       for (const card of grupoCards) {
-        md += `- ${card.contenido}\n`;
+        md += `- ${card.contenido} — *${card.autor_nombre || 'Anónimo'}*\n`;
       }
       md += '\n';
     }
@@ -50,14 +50,14 @@ export function generateMarkdown(
     if (ungrouped.length > 0) {
       if (columnGroups.length > 0) md += `### Otras\n\n`;
       for (const card of ungrouped) {
-        md += `- ${card.contenido}\n`;
+        md += `- ${card.contenido} — *${card.autor_nombre || 'Anónimo'}*\n`;
       }
       md += '\n';
     }
   }
 
   md += `---\n\n`;
-  md += `*Generado por Retro Scrum — ${date}*\n`;
+  md += `*Generado por RetroPulse — ${date}*\n`;
 
   return md;
 }
