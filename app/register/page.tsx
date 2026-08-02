@@ -1,17 +1,36 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import styles from './register.module.css';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const invitacionToken = searchParams.get('invitacion');
+
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fromInvite, setFromInvite] = useState(false);
+
+  useEffect(() => {
+    if (invitacionToken) {
+      setFromInvite(true);
+      // Fetch invitation to pre-fill email
+      fetch(`/api/invitaciones/empresa/${invitacionToken}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.invitacion?.email) {
+            setEmail(data.invitacion.email);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [invitacionToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,10 +44,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      const body: any = { email, password, nombre };
+      if (invitacionToken) body.invitacion_token = invitacionToken;
+
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, nombre }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -38,7 +60,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Save user to store so DashboardLayout has it immediately
       useAuthStore.getState().setUser(data.user);
       router.push('/dashboard');
     } catch {

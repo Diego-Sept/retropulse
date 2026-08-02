@@ -5,8 +5,8 @@ import { RegisterRequest, AuthResponse } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const body: RegisterRequest = await request.json();
-    const { email, password, nombre } = body;
+    const body: RegisterRequest & { invitacion_token?: string } = await request.json();
+    const { email, password, nombre, invitacion_token } = body;
 
     if (!email || !password || !nombre) {
       return NextResponse.json(
@@ -36,6 +36,87 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const passwordHash = await hashPassword(password);
+
+    // ── Registration via invitation ──
+    if (invitacion_token) {
+      const { data: invitacion, error: invError } = await supabase
+        .from('invitaciones_empresa')
+        .select('*')
+        .eq('token', invitacion_token)
+        .maybeSingle();
+
+      if (invError || !invitacion) {
+        return NextResponse.json({ error: 'Invitación no encontrada' }, { status: 404 });
+      }
+      if (invitacion.aceptada) {
+        return NextResponse.json({ error: 'Invitación ya aceptada' }, { status: 400 });
+      }
+      if (new Date(invitacion.expira_en) < new Date()) {
+        return NextResponse.json({ error: 'Invitación expirada' }, { status: 400 });
+      }
+      if (email.toLowerCase() !== invitacion.email.toLowerCase()) {
+        return NextResponse.json({ error: 'El email no coincide con la invitación' }, { status: 403 });
+      }
+
+      // Create user in the inviting empresa
+      const { data: usuario, error: userError } = await supabase
+        .from('usuarios')
+        .insert({
+          email,
+          password_hash: passwordHash,
+          nombre,
+          rol_global: invitacion.rol,
+          empresa_id: invitacion.empresa_id,
+        })
+        .select('id, email, nombre, rol_global, empresa_id')
+        .single();
+
+      if (userError) {
+        console.error('User creation error:', userError);
+        return NextResponse.json({ error: 'Error al crear el usuario' }, { status: 500 });
+      }
+
+      // Mark invitation as accepted
+      await supabase
+        .from('invitaciones_empresa')
+        .update({ aceptada: true })
+        .eq('id', invitacion.id);
+
+      // Get empresa's suscripcion for JWT
+      const { data: susc } = await supabase
+        .from('suscripciones')
+        .select('id')
+        .eq('empresa_id', invitacion.empresa_id)
+        .eq('estado', 'activa')
+        .maybeSingle();
+
+      const token = await signJwt({
+        user_id: usuario.id,
+        empresa_id: invitacion.empresa_id,
+        rol_global: usuario.rol_global as any,
+        suscripcion_id: susc?.id || '',
+        nombre: usuario.nombre,
+        email: usuario.email,
+      });
+
+      const response = NextResponse.json({
+        user: { ...usuario, suscripcion_id: susc?.id || '' },
+        token,
+      } satisfies AuthResponse);
+
+      response.cookies.set('session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60,
+      });
+
+      return response;
+    }
+
+    // ── Normal registration (creates empresa) ──
     // Get Free plan
     const { data: freePlan, error: planError } = await supabase
       .from('planes_subscription')
@@ -49,9 +130,6 @@ export async function POST(request: NextRequest) {
         { status: 500 },
       );
     }
-
-    // Hash password
-    const passwordHash = await hashPassword(password);
 
     // Create empresa (tenant)
     const { data: empresa, error: empresaError } = await supabase
