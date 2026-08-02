@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     }
 
     const plans: Record<string, { amount: number; name: string; clusters: number; equipos: number }> = {
-      small_team: { amount: 9, name: 'Small Team', clusters: 30, equipos: 1 },
-      enterprise: { amount: 29, name: 'Enterprise', clusters: 500, equipos: 10 },
+      small_team: { amount: 15, name: 'Small Team', clusters: 30, equipos: 1 },
+      enterprise: { amount: 49, name: 'Enterprise', clusters: 500, equipos: 10 },
     };
 
     const selectedPlan = plans[plan];
