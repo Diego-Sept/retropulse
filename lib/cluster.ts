@@ -69,7 +69,7 @@ export async function clusterCards(tarjetas: ClusterInput[]): Promise<ClusterOut
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-      max_tokens: 2000,
+      max_tokens: 4096,
     }),
   });
 
