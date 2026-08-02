@@ -1,72 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
 import { getAuthUser } from '@/lib/auth-middleware';
+import { verifySalaAccess, AppError } from '@/lib/sala-access';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { salaId: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-    }
-
     const supabase = getSupabaseServerClient();
-
-    // Get sala and verify it belongs to user's empresa via equipo
-    const { data: sala, error: salaError } = await supabase
-      .from('salas')
-      .select('*, equipos!inner(empresa_id)')
-      .eq('id', params.salaId)
-      .maybeSingle();
-
-    if (salaError) {
-      console.error('Error fetching sala:', salaError);
-      return NextResponse.json(
-        { error: 'Error al obtener la sala' },
-        { status: 500 },
-      );
-    }
-
-    if (!sala) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
-    }
-
-    // Tenant isolation: verify empresa matches
-    const equipoData = sala.equipos as { empresa_id: string };
-    if (equipoData.empresa_id !== authUser.empresa_id) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
-    }
-
-    // Verify user is member of the sala's equipo
-    const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
-
-    if (!isGlobalAdmin) {
-      const { data: membership, error: memError } = await supabase
-        .from('usuarios_equipo')
-        .select('id')
-        .eq('equipo_id', sala.equipo_id)
-        .eq('usuario_id', authUser.id)
-        .maybeSingle();
-
-      if (memError || !membership) {
-        return NextResponse.json(
-          { error: 'No tienes acceso a esta sala' },
-          { status: 403 },
-        );
-      }
-    }
+    const { sala } = await verifySalaAccess(supabase, request, params.salaId);
 
     const { equipos: _, ...salaData } = sala;
     return NextResponse.json({ sala: salaData });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('GET /api/salas/[salaId] error:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
@@ -87,45 +37,46 @@ export async function PATCH(
 
     const supabase = getSupabaseServerClient();
 
-    // Get sala and verify it belongs to user's empresa via equipo
+    // Get sala with equipo info
     const { data: sala, error: salaError } = await supabase
       .from('salas')
-      .select('*, equipos!inner(empresa_id)')
+      .select('*, equipos!inner(id, empresa_id, nombre)')
       .eq('id', params.salaId)
       .maybeSingle();
 
     if (salaError || !sala) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
     }
 
-    // Tenant isolation
-    const equipoData = sala.equipos as { empresa_id: string };
-    if (equipoData.empresa_id !== authUser.empresa_id) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
-    }
+    const equipoData = sala.equipos as { id: string; empresa_id: string };
 
-    // Verify team_admin role (or empresa_admin/super_admin)
+    // Access check: same empresa or direct member
     const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
+    const isSameEmpresa = equipoData.empresa_id === authUser.empresa_id;
 
-    if (!isGlobalAdmin) {
-      const { data: membership, error: memError } = await supabase
+    if (!isSameEmpresa) {
+      // Cross-empresa — must be a direct member
+      const { data: crossMembership } = await supabase
         .from('usuarios_equipo')
-        .select('rol')
-        .eq('equipo_id', sala.equipo_id)
+        .select('id, rol')
+        .eq('equipo_id', equipoData.id)
         .eq('usuario_id', authUser.id)
         .maybeSingle();
 
-      if (memError || !membership || membership.rol !== 'team_admin') {
-        return NextResponse.json(
-          { error: 'No tienes permisos para modificar esta sala' },
-          { status: 403 },
-        );
+      if (!crossMembership || crossMembership.rol !== 'team_admin') {
+        return NextResponse.json({ error: 'No tienes permisos para modificar esta sala' }, { status: 403 });
+      }
+    } else if (!isGlobalAdmin) {
+      // Same empresa but not admin — check team_admin role
+      const { data: membership } = await supabase
+        .from('usuarios_equipo')
+        .select('rol')
+        .eq('equipo_id', equipoData.id)
+        .eq('usuario_id', authUser.id)
+        .maybeSingle();
+
+      if (!membership || membership.rol !== 'team_admin') {
+        return NextResponse.json({ error: 'No tienes permisos para modificar esta sala' }, { status: 403 });
       }
     }
 
@@ -178,6 +129,9 @@ export async function PATCH(
 
     return NextResponse.json({ sala: updatedSala });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('PATCH /api/salas/[salaId] error:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
@@ -198,45 +152,42 @@ export async function DELETE(
 
     const supabase = getSupabaseServerClient();
 
-    // Get sala and verify it belongs to user's empresa via equipo
+    // Get sala with equipo info
     const { data: sala, error: salaError } = await supabase
       .from('salas')
-      .select('*, equipos!inner(empresa_id)')
+      .select('*, equipos!inner(id, empresa_id)')
       .eq('id', params.salaId)
       .maybeSingle();
 
     if (salaError || !sala) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
     }
 
-    // Tenant isolation
-    const equipoData = sala.equipos as { empresa_id: string };
-    if (equipoData.empresa_id !== authUser.empresa_id) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
-    }
-
-    // Verify team_admin role
+    const equipoData = sala.equipos as { id: string; empresa_id: string };
     const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
+    const isSameEmpresa = equipoData.empresa_id === authUser.empresa_id;
 
-    if (!isGlobalAdmin) {
-      const { data: membership, error: memError } = await supabase
+    if (!isSameEmpresa) {
+      const { data: crossMembership } = await supabase
         .from('usuarios_equipo')
-        .select('rol')
-        .eq('equipo_id', sala.equipo_id)
+        .select('id, rol')
+        .eq('equipo_id', equipoData.id)
         .eq('usuario_id', authUser.id)
         .maybeSingle();
 
-      if (memError || !membership || membership.rol !== 'team_admin') {
-        return NextResponse.json(
-          { error: 'No tienes permisos para archivar esta sala' },
-          { status: 403 },
-        );
+      if (!crossMembership || crossMembership.rol !== 'team_admin') {
+        return NextResponse.json({ error: 'No tienes permisos para archivar esta sala' }, { status: 403 });
+      }
+    } else if (!isGlobalAdmin) {
+      const { data: membership } = await supabase
+        .from('usuarios_equipo')
+        .select('rol')
+        .eq('equipo_id', equipoData.id)
+        .eq('usuario_id', authUser.id)
+        .maybeSingle();
+
+      if (!membership || membership.rol !== 'team_admin') {
+        return NextResponse.json({ error: 'No tienes permisos para archivar esta sala' }, { status: 403 });
       }
     }
 
@@ -258,6 +209,9 @@ export async function DELETE(
 
     return NextResponse.json({ sala: archivedSala });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('DELETE /api/salas/[salaId] error:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },

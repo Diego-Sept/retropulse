@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth-middleware';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
+import { verifySalaAccess, AppError } from '@/lib/sala-access';
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthUser(request);
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { sala_id, columna_id, nombre, tarjetas_ids } = body;
 
@@ -26,37 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabaseServerClient();
-
-    // Verify sala access
-    const { data: sala, error: salaError } = await supabase
-      .from('salas')
-      .select('*, equipos!inner(empresa_id)')
-      .eq('id', sala_id)
-      .maybeSingle();
-
-    if (salaError || !sala) {
-      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
-    }
-
-    const equipoData = sala.equipos as { empresa_id: string };
-    if (equipoData.empresa_id !== user.empresa_id) {
-      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
-    }
-
-    // Verify user is member
-    const isGlobalAdmin = user.rol_global === 'empresa_admin' || user.rol_global === 'super_admin';
-    if (!isGlobalAdmin) {
-      const { data: membership } = await supabase
-        .from('usuarios_equipo')
-        .select('id')
-        .eq('equipo_id', sala.equipo_id)
-        .eq('usuario_id', user.id)
-        .maybeSingle();
-
-      if (!membership) {
-        return NextResponse.json({ error: 'No tienes acceso a esta sala' }, { status: 403 });
-      }
-    }
+    await verifySalaAccess(supabase, request, sala_id);
 
     // Verify all tarjetas belong to this sala
     const { data: tarjetas, error: tarjetasError } = await supabase
@@ -98,6 +63,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ grupo }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('POST /api/grupos error:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }

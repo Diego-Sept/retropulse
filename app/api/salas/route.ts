@@ -61,32 +61,38 @@ export async function GET(request: NextRequest) {
     }
 
     // No equipo_id — return all salas from teams the user belongs to
-    let equiposQuery = supabase
-      .from('equipos')
-      .select('id, nombre')
-      .eq('empresa_id', authUser.empresa_id);
+    // Get teams where user is member (directly via usuarios_equipo, regardless of empresa)
+    const { data: membresias } = await supabase
+      .from('usuarios_equipo')
+      .select('equipo_id')
+      .eq('usuario_id', authUser.id);
 
-    if (!isGlobalAdmin) {
-      // Get only teams where user is a member
-      const { data: membresias } = await supabase
-        .from('usuarios_equipo')
-        .select('equipo_id')
-        .eq('usuario_id', authUser.id);
+    const directEquipoIds = (membresias || []).map((m) => m.equipo_id);
 
-      const equipoIds = (membresias || []).map((m) => m.equipo_id);
-      if (equipoIds.length === 0) {
-        return NextResponse.json({ salas: [] });
-      }
-      equiposQuery = equiposQuery.in('id', equipoIds);
+    // Also get teams from user's own empresa (if admin)
+    let empresaEquipoIds: string[] = [];
+    if (isGlobalAdmin) {
+      const { data: empresaEquipos } = await supabase
+        .from('equipos')
+        .select('id')
+        .eq('empresa_id', authUser.empresa_id);
+      empresaEquipoIds = (empresaEquipos || []).map((e) => e.id);
     }
 
-    const { data: equipos } = await equiposQuery;
-    if (!equipos || equipos.length === 0) {
+    // Merge unique
+    const allEquipoIds = [...new Set([...directEquipoIds, ...empresaEquipoIds])];
+
+    if (allEquipoIds.length === 0) {
       return NextResponse.json({ salas: [] });
     }
 
-    const allEquipoIds = equipos.map((e) => e.id);
-    const equipoMap = new Map(equipos.map((e) => [e.id, e.nombre]));
+    // Get equipo names for display
+    const { data: equipos } = await supabase
+      .from('equipos')
+      .select('id, nombre')
+      .in('id', allEquipoIds);
+
+    const equipoMap = new Map((equipos || []).map((e) => [e.id, e.nombre]));
 
     const { data: salas, error: salasError } = await supabase
       .from('salas')

@@ -1,60 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
-import { getAuthUser } from '@/lib/auth-middleware';
+import { verifySalaAccess, AppError } from '@/lib/sala-access';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { salaId: string; tarjetaId: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-    }
-
     const supabase = getSupabaseServerClient();
-
-    // Get sala and verify it belongs to user's empresa via equipo
-    const { data: sala, error: salaError } = await supabase
-      .from('salas')
-      .select('*, equipos!inner(empresa_id)')
-      .eq('id', params.salaId)
-      .maybeSingle();
-
-    if (salaError || !sala) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
-    }
-
-    // Tenant isolation
-    const equipoData = sala.equipos as { empresa_id: string };
-    if (equipoData.empresa_id !== authUser.empresa_id) {
-      return NextResponse.json(
-        { error: 'Sala no encontrada' },
-        { status: 404 },
-      );
-    }
-
-    // Verify user is member of the sala's equipo
-    const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
-
-    if (!isGlobalAdmin) {
-      const { data: membership, error: memError } = await supabase
-        .from('usuarios_equipo')
-        .select('id')
-        .eq('equipo_id', sala.equipo_id)
-        .eq('usuario_id', authUser.id)
-        .maybeSingle();
-
-      if (memError || !membership) {
-        return NextResponse.json(
-          { error: 'No tienes acceso a esta sala' },
-          { status: 403 },
-        );
-      }
-    }
+    await verifySalaAccess(supabase, request, params.salaId);
 
     // Get the tarjeta to verify it belongs to this sala
     const { data: tarjeta, error: tarjetaError } = await supabase
@@ -108,6 +62,9 @@ export async function PATCH(
 
     return NextResponse.json({ tarjeta: updated });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('PATCH /api/salas/[salaId]/tarjetas/[tarjetaId] error:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
@@ -121,43 +78,8 @@ export async function DELETE(
   { params }: { params: { salaId: string; tarjetaId: string } },
 ) {
   try {
-    const authUser = await getAuthUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-    }
-
     const supabase = getSupabaseServerClient();
-
-    // Verify sala belongs to user's empresa via equipo
-    const { data: sala, error: salaError } = await supabase
-      .from('salas')
-      .select('*, equipos!inner(empresa_id)')
-      .eq('id', params.salaId)
-      .maybeSingle();
-
-    if (salaError || !sala) {
-      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
-    }
-
-    const equipoData = sala.equipos as { empresa_id: string };
-    if (equipoData.empresa_id !== authUser.empresa_id) {
-      return NextResponse.json({ error: 'Sala no encontrada' }, { status: 404 });
-    }
-
-    // Verify user is member of the sala's equipo (or global admin)
-    const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
-    if (!isGlobalAdmin) {
-      const { data: membership, error: memError } = await supabase
-        .from('usuarios_equipo')
-        .select('id')
-        .eq('equipo_id', sala.equipo_id)
-        .eq('usuario_id', authUser.id)
-        .maybeSingle();
-
-      if (memError || !membership) {
-        return NextResponse.json({ error: 'No tienes acceso a esta sala' }, { status: 403 });
-      }
-    }
+    await verifySalaAccess(supabase, request, params.salaId);
 
     // Verify tarjeta exists and belongs to this sala
     const { data: tarjeta, error: tarjetaError } = await supabase
@@ -186,6 +108,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('DELETE /api/salas/[salaId]/tarjetas/[tarjetaId] error:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },

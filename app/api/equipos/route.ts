@@ -12,11 +12,29 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
 
-    const { data: equipos, error } = await supabase
+    // Get teams where user is a direct member (regardless of empresa)
+    const { data: membresias } = await supabase
+      .from('usuarios_equipo')
+      .select('equipo_id')
+      .eq('usuario_id', authUser.id);
+
+    const directEquipoIds = (membresias || []).map((m) => m.equipo_id);
+
+    // Also get teams from user's own empresa (for admin visibility)
+    const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
+    let empresaQuery = supabase
       .from('equipos')
-      .select('id, nombre, created_at, updated_at, empresa_id')
-      .eq('empresa_id', authUser.empresa_id)
-      .order('created_at', { ascending: false });
+      .select('id, nombre, created_at, updated_at, empresa_id');
+
+    if (isGlobalAdmin) {
+      empresaQuery = empresaQuery.eq('empresa_id', authUser.empresa_id);
+    } else if (directEquipoIds.length > 0) {
+      empresaQuery = empresaQuery.in('id', directEquipoIds);
+    } else {
+      return NextResponse.json({ equipos: [] });
+    }
+
+    const { data: equipos, error } = await empresaQuery.order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching equipos:', error);
