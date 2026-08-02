@@ -276,6 +276,21 @@
   margin: 0 0 var(--space-3);
 }
 
+.inviteLinkBox {
+  margin-bottom: var(--space-3);
+}
+
+.inviteLinkInput {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+  cursor: text;
+}
+
 .inviteDoneBtn {
   padding: var(--space-2) var(--space-4);
   background: var(--color-accent);

@@ -25,6 +25,7 @@ export default function EquiposPage() {
   const [inviteRol, setInviteRol] = useState<'member' | 'team_admin'>('member');
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
 
   const activeEquipo = activeEquipoId
@@ -99,6 +100,7 @@ export default function EquiposPage() {
     setInviting(true);
     setInviteError(null);
     setInviteMsg(null);
+    setInviteLink(null);
 
     try {
       const res = await fetch(`/api/equipos/${activeEquipoId}/invitar`, {
@@ -113,7 +115,11 @@ export default function EquiposPage() {
         throw new Error(data.error || 'Error al invitar');
       }
 
-      setInviteMsg(`Invitación enviada a ${inviteEmail}. El usuario debe aceptarla desde el link que reciba.`);
+      setInviteMsg(`Invitación enviada a ${inviteEmail}. Si el mail no llega, compartí el link:`);
+      if (data.token) {
+        const link = `${window.location.origin}/invitaciones/${data.token}`;
+        setInviteLink(link);
+      }
       setInviteEmail('');
     } catch (err: any) {
       setInviteError(err.message);
@@ -162,6 +168,17 @@ export default function EquiposPage() {
           {inviteMsg ? (
             <div className={styles.inviteSuccess}>
               <p>{inviteMsg}</p>
+              {inviteLink && (
+                <div className={styles.inviteLinkBox}>
+                  <input
+                    type="text"
+                    value={inviteLink}
+                    readOnly
+                    className={styles.inviteLinkInput}
+                    onFocus={(e) => e.target.select()}
+                  />
+                </div>
+              )}
               <button onClick={closeInvite} className={styles.inviteDoneBtn}>Listo</button>
             </div>
           ) : (
