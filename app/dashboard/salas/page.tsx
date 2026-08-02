@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Sala } from '@/types';
+import { useRouter } from 'next/navigation';
+import { Sala, Equipo } from '@/types';
 import styles from './salas.module.css';
 
 interface SalaConConteo extends Sala {
@@ -10,25 +10,20 @@ interface SalaConConteo extends Sala {
 
 export default function SalasPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const equipoId = searchParams.get('equipo_id');
 
   const [salas, setSalas] = useState<SalaConConteo[]>([]);
+  const [equipos, setEquipos] = useState<Equipo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [nombre, setNombre] = useState('');
+  const [selectedEquipoId, setSelectedEquipoId] = useState('');
   const [creating, setCreating] = useState(false);
 
   const fetchSalas = useCallback(async () => {
-    if (!equipoId) {
-      setLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch(`/api/salas?equipo_id=${equipoId}`);
+      const res = await fetch('/api/salas');
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Error al cargar salas');
@@ -40,15 +35,29 @@ export default function SalasPage() {
     } finally {
       setLoading(false);
     }
-  }, [equipoId]);
+  }, []);
+
+  const fetchEquipos = useCallback(async () => {
+    try {
+      const res = await fetch('/api/equipos');
+      if (res.ok) {
+        const data = await res.json();
+        setEquipos(data.equipos || []);
+        if (data.equipos?.length > 0) {
+          setSelectedEquipoId(data.equipos[0].id);
+        }
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     fetchSalas();
-  }, [fetchSalas]);
+    fetchEquipos();
+  }, [fetchSalas, fetchEquipos]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim() || !equipoId) return;
+    if (!nombre.trim() || !selectedEquipoId) return;
 
     setCreating(true);
     setError(null);
@@ -57,7 +66,7 @@ export default function SalasPage() {
       const res = await fetch('/api/salas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ equipo_id: equipoId, nombre: nombre.trim() }),
+        body: JSON.stringify({ equipo_id: selectedEquipoId, nombre: nombre.trim() }),
       });
 
       if (!res.ok) {
@@ -79,15 +88,11 @@ export default function SalasPage() {
     if (!confirm('¿Archivar esta sala? Las tarjetas no se perderán.')) return;
 
     try {
-      const res = await fetch(`/api/salas/${salaId}`, {
-        method: 'DELETE',
-      });
-
+      const res = await fetch(`/api/salas/${salaId}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Error al archivar sala');
       }
-
       await fetchSalas();
     } catch (err: any) {
       setError(err.message);
@@ -101,27 +106,15 @@ export default function SalasPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado: 'activa' }),
       });
-
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Error al reactivar sala');
       }
-
       await fetchSalas();
     } catch (err: any) {
       setError(err.message);
     }
   };
-
-  if (!equipoId) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.empty}>
-          <p>Seleccioná un equipo para ver sus salas.</p>
-        </div>
-      </div>
-    );
-  }
 
   const filteredSalas = salas.filter((s) =>
     showArchived ? true : s.estado === 'activa'
@@ -131,8 +124,8 @@ export default function SalasPage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Retrospectivas</h1>
-          <p className={styles.subtitle}>Salas de retrospectiva del equipo</p>
+          <h1 className={styles.title}>Salas</h1>
+          <p className={styles.subtitle}>Todas las retrospectivas de tus equipos</p>
         </div>
         <div className={styles.headerActions}>
           <label className={styles.toggleLabel}>
@@ -156,14 +149,22 @@ export default function SalasPage() {
       {error && (
         <div className={styles.error}>
           {error}
-          <button onClick={() => setError(null)} className={styles.errorClose}>
-            ×
-          </button>
+          <button onClick={() => setError(null)} className={styles.errorClose}>×</button>
         </div>
       )}
 
       {showCreate && (
         <form onSubmit={handleCreate} className={styles.createForm}>
+          <select
+            value={selectedEquipoId}
+            onChange={(e) => setSelectedEquipoId(e.target.value)}
+            className={styles.select}
+            disabled={creating}
+          >
+            {equipos.map((eq) => (
+              <option key={eq.id} value={eq.id}>{eq.nombre}</option>
+            ))}
+          </select>
           <input
             type="text"
             value={nombre}
@@ -176,7 +177,7 @@ export default function SalasPage() {
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={creating || !nombre.trim()}
+            disabled={creating || !nombre.trim() || !selectedEquipoId}
           >
             {creating ? 'Creando...' : 'Crear'}
           </button>
@@ -187,11 +188,7 @@ export default function SalasPage() {
         <div className={styles.loading}>Cargando salas...</div>
       ) : filteredSalas.length === 0 ? (
         <div className={styles.empty}>
-          <p>
-            {showArchived
-              ? 'No hay salas en este equipo.'
-              : 'No hay salas activas.'}
-          </p>
+          <p>{showArchived ? 'No hay salas en tus equipos.' : 'No hay salas activas.'}</p>
           <p>Creá una nueva sala para empezar una retrospectiva.</p>
         </div>
       ) : (
@@ -207,10 +204,12 @@ export default function SalasPage() {
               >
                 <h3 className={styles.cardTitle}>{sala.nombre}</h3>
                 <p className={styles.cardMeta}>
+                  {sala.equipo_nombre && (
+                    <span className={styles.teamName}>{sala.equipo_nombre}</span>
+                  )}
+                  {' · '}
                   {new Date(sala.created_at).toLocaleDateString('es-AR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
+                    year: 'numeric', month: 'long', day: 'numeric',
                   })}
                 </p>
                 <span

@@ -12,65 +12,99 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const equipoId = searchParams.get('equipo_id');
 
-    if (!equipoId) {
-      return NextResponse.json(
-        { error: 'equipo_id es requerido' },
-        { status: 400 },
-      );
-    }
-
     const supabase = getSupabaseServerClient();
-
-    // Verify equipo belongs to user's empresa
-    const { data: equipo, error: eqError } = await supabase
-      .from('equipos')
-      .select('id')
-      .eq('id', equipoId)
-      .eq('empresa_id', authUser.empresa_id)
-      .maybeSingle();
-
-    if (eqError || !equipo) {
-      return NextResponse.json(
-        { error: 'Equipo no encontrado' },
-        { status: 404 },
-      );
-    }
-
-    // Verify user is member of the equipo
     const isGlobalAdmin = authUser.rol_global === 'empresa_admin' || authUser.rol_global === 'super_admin';
 
-    if (!isGlobalAdmin) {
-      const { data: membership, error: memError } = await supabase
-        .from('usuarios_equipo')
+    if (equipoId) {
+      // Filter by specific equipo — existing behavior
+      const { data: equipo, error: eqError } = await supabase
+        .from('equipos')
         .select('id')
-        .eq('equipo_id', equipoId)
-        .eq('usuario_id', authUser.id)
+        .eq('id', equipoId)
+        .eq('empresa_id', authUser.empresa_id)
         .maybeSingle();
 
-      if (memError || !membership) {
-        return NextResponse.json(
-          { error: 'No tienes acceso a este equipo' },
-          { status: 403 },
-        );
+      if (eqError || !equipo) {
+        return NextResponse.json({ error: 'Equipo no encontrado' }, { status: 404 });
       }
+
+      if (!isGlobalAdmin) {
+        const { data: membership, error: memError } = await supabase
+          .from('usuarios_equipo')
+          .select('id')
+          .eq('equipo_id', equipoId)
+          .eq('usuario_id', authUser.id)
+          .maybeSingle();
+
+        if (memError || !membership) {
+          return NextResponse.json({ error: 'No tienes acceso a este equipo' }, { status: 403 });
+        }
+      }
+
+      const { data: salas, error: salasError } = await supabase
+        .from('salas')
+        .select('*, equipos!inner(nombre)')
+        .eq('equipo_id', equipoId)
+        .order('created_at', { ascending: false });
+
+      if (salasError) {
+        console.error('Error fetching salas:', salasError);
+        return NextResponse.json({ error: 'Error al obtener las salas' }, { status: 500 });
+      }
+
+      const formatted = (salas || []).map((s) => ({
+        ...s,
+        equipo_nombre: (s.equipos as any)?.nombre || '',
+      }));
+
+      return NextResponse.json({ salas: formatted });
     }
 
-    // Get salas for the equipo
+    // No equipo_id — return all salas from teams the user belongs to
+    let equiposQuery = supabase
+      .from('equipos')
+      .select('id, nombre')
+      .eq('empresa_id', authUser.empresa_id);
+
+    if (!isGlobalAdmin) {
+      // Get only teams where user is a member
+      const { data: membresias } = await supabase
+        .from('usuarios_equipo')
+        .select('equipo_id')
+        .eq('usuario_id', authUser.id);
+
+      const equipoIds = (membresias || []).map((m) => m.equipo_id);
+      if (equipoIds.length === 0) {
+        return NextResponse.json({ salas: [] });
+      }
+      equiposQuery = equiposQuery.in('id', equipoIds);
+    }
+
+    const { data: equipos } = await equiposQuery;
+    if (!equipos || equipos.length === 0) {
+      return NextResponse.json({ salas: [] });
+    }
+
+    const allEquipoIds = equipos.map((e) => e.id);
+    const equipoMap = new Map(equipos.map((e) => [e.id, e.nombre]));
+
     const { data: salas, error: salasError } = await supabase
       .from('salas')
       .select('*')
-      .eq('equipo_id', equipoId)
+      .in('equipo_id', allEquipoIds)
       .order('created_at', { ascending: false });
 
     if (salasError) {
       console.error('Error fetching salas:', salasError);
-      return NextResponse.json(
-        { error: 'Error al obtener las salas' },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Error al obtener las salas' }, { status: 500 });
     }
 
-    return NextResponse.json({ salas });
+    const formatted = (salas || []).map((s) => ({
+      ...s,
+      equipo_nombre: equipoMap.get(s.equipo_id) || '',
+    }));
+
+    return NextResponse.json({ salas: formatted });
   } catch (error) {
     console.error('GET /api/salas error:', error);
     return NextResponse.json(

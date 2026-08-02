@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Equipo } from '@/types';
 import styles from './equipos.module.css';
 
@@ -10,12 +10,26 @@ interface EquipoConConteo extends Equipo {
 
 export default function EquiposPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeEquipoId = searchParams.get('id');
+
   const [equipos, setEquipos] = useState<EquipoConConteo[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [nombre, setNombre] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Invitation state
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRol, setInviteRol] = useState<'member' | 'team_admin'>('member');
+  const [inviting, setInviting] = useState(false);
+  const [inviteMsg, setInviteMsg] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  const activeEquipo = activeEquipoId
+    ? equipos.find((e) => e.id === activeEquipoId)
+    : null;
 
   const fetchEquipos = async () => {
     try {
@@ -64,24 +78,55 @@ export default function EquiposPage() {
   };
 
   const handleDelete = async (equipoId: string) => {
-    if (!confirm('¿Estás seguro de eliminar este equipo? Se eliminarán todas sus salas y datos.')) {
-      return;
-    }
+    if (!confirm('¿Estás seguro de eliminar este equipo? Se eliminarán todas sus salas y datos.')) return;
 
     try {
-      const res = await fetch(`/api/equipos/${equipoId}`, {
-        method: 'DELETE',
-      });
-
+      const res = await fetch(`/api/equipos/${equipoId}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Error al eliminar equipo');
       }
-
       await fetchEquipos();
     } catch (err: any) {
       setError(err.message);
     }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim() || !activeEquipoId) return;
+
+    setInviting(true);
+    setInviteError(null);
+    setInviteMsg(null);
+
+    try {
+      const res = await fetch(`/api/equipos/${activeEquipoId}/invitar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), rol: inviteRol }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al invitar');
+      }
+
+      setInviteMsg(`Invitación enviada a ${inviteEmail}. El usuario debe aceptarla desde el link que reciba.`);
+      setInviteEmail('');
+    } catch (err: any) {
+      setInviteError(err.message);
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const closeInvite = () => {
+    router.push('/dashboard/equipos');
+    setInviteMsg(null);
+    setInviteError(null);
+    setInviteEmail('');
   };
 
   if (loading) {
@@ -104,6 +149,54 @@ export default function EquiposPage() {
         <div className={styles.error}>
           {error}
           <button onClick={() => setError(null)} className={styles.errorClose}>×</button>
+        </div>
+      )}
+
+      {/* Invitation panel */}
+      {activeEquipo && (
+        <div className={styles.invitePanel}>
+          <div className={styles.inviteHeader}>
+            <h2>Invitar a {activeEquipo.nombre}</h2>
+            <button onClick={closeInvite} className={styles.inviteClose}>×</button>
+          </div>
+          {inviteMsg ? (
+            <div className={styles.inviteSuccess}>
+              <p>{inviteMsg}</p>
+              <button onClick={closeInvite} className={styles.inviteDoneBtn}>Listo</button>
+            </div>
+          ) : (
+            <form onSubmit={handleInvite} className={styles.inviteForm}>
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Email del colaborador"
+                className={styles.inviteInput}
+                disabled={inviting}
+                autoFocus
+                required
+              />
+              <select
+                value={inviteRol}
+                onChange={(e) => setInviteRol(e.target.value as 'member' | 'team_admin')}
+                className={styles.inviteSelect}
+                disabled={inviting}
+              >
+                <option value="member">Miembro</option>
+                <option value="team_admin">Administrador</option>
+              </select>
+              <button
+                type="submit"
+                className={styles.inviteSubmitBtn}
+                disabled={inviting || !inviteEmail.trim()}
+              >
+                {inviting ? 'Enviando...' : 'Invitar'}
+              </button>
+            </form>
+          )}
+          {inviteError && (
+            <div className={styles.inviteError}>{inviteError}</div>
+          )}
         </div>
       )}
 
@@ -131,7 +224,7 @@ export default function EquiposPage() {
       {equipos.length === 0 ? (
         <div className={styles.empty}>
           <p>No hay equipos aún.</p>
-          <p>Crea tu primer equipo para comenzar.</p>
+          <p>Creá tu primer equipo para comenzar.</p>
         </div>
       ) : (
         <div className={styles.grid}>
@@ -146,7 +239,7 @@ export default function EquiposPage() {
               <div className={styles.cardActions}>
                 <button
                   className={styles.actionBtn}
-                    onClick={() => router.push(`/dashboard/salas?equipo_id=${equipo.id}`)}
+                  onClick={() => router.push(`/dashboard/salas?equipo_id=${equipo.id}`)}
                 >
                   Salas
                 </button>
