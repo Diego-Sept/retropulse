@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
 import { getAuthUser } from '@/lib/auth-middleware';
 import { checkTeamLimit } from '@/lib/planes';
+import { sendEmail, buildInvitationEmail } from '@/lib/email';
 import crypto from 'crypto';
 
 export async function POST(
@@ -19,7 +20,7 @@ export async function POST(
     // Verify equipo belongs to user's empresa
     const { data: equipo, error: eqError } = await supabase
       .from('equipos')
-      .select('id')
+      .select('id, nombre')
       .eq('id', params.equipoId)
       .eq('empresa_id', authUser.empresa_id)
       .maybeSingle();
@@ -147,6 +148,22 @@ export async function POST(
         { error: 'Error al crear la invitación' },
         { status: 500 },
       );
+    }
+
+    // Send invitation email
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const invitationLink = `${appUrl}/invitaciones/${token}`;
+    const html = buildInvitationEmail(equipo.nombre, invitationLink);
+
+    const emailResult = await sendEmail({
+      to: email.trim().toLowerCase(),
+      subject: `Invitación a unirte a ${equipo.nombre} — RetroPulse`,
+      html,
+    });
+
+    if (!emailResult.success) {
+      console.warn('Failed to send invitation email:', emailResult.error);
+      // Still return success — invitation exists, user can share link manually
     }
 
     return NextResponse.json(

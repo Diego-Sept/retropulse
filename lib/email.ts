@@ -6,14 +6,14 @@ interface EmailOptions {
   html: string;
 }
 
+const smtpUser = process.env.SMTP_USER || '';
+const smtpPass = process.env.SMTP_PASS || '';
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.tuproveedor.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
-  auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || '',
-  },
+  ...(smtpUser && smtpPass ? { auth: { user: smtpUser, pass: smtpPass } } : {}),
 });
 
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
@@ -52,5 +52,15 @@ export function buildPriceChangeEmail(planNombre: string, precioAnterior: number
       <li>Fecha efectiva: <strong>${fechaEfectiva}</strong></li>
     </ul>
     <p>Si tenés dudas, contactate con soporte.</p>
+  `;
+}
+
+export function buildInvitationEmail(equipoNombre: string, invitationLink: string): string {
+  return `
+    <h2>Invitación a RetroPulse</h2>
+    <p>Te invitaron a unirte al equipo <strong>${equipoNombre}</strong>.</p>
+    <p>Hacé clic en el siguiente enlace para aceptar la invitación:</p>
+    <p><a href="${invitationLink}">${invitationLink}</a></p>
+    <p>Este enlace expira en 7 días.</p>
   `;
 }
