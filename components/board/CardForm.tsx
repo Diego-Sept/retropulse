@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useBoard } from '@/contexts/BoardContext';
+import { useAuthStore } from '@/stores/auth-store';
 import styles from './CardForm.module.css';
 
 interface CardFormProps {
@@ -12,6 +13,7 @@ export function CardForm({ salaId, columnaId }: CardFormProps) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { addTarjeta, deleteTarjeta } = useBoard();
+  const user = useAuthStore((s) => s.user);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +30,8 @@ export function CardForm({ salaId, columnaId }: CardFormProps) {
       columna_id: columnaId,
       contenido: trimmed,
       grupo_id: null,
+      created_by: user?.id || null,
+      autor_nombre: user?.nombre || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

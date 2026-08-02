@@ -27,6 +27,14 @@
   word-break: break-word;
 }
 
+.author {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
 .deleteBtn {
   position: absolute;
   top: 4px;

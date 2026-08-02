@@ -62,7 +62,7 @@ export async function GET(
 
     let query = supabase
       .from('tarjetas')
-      .select('*, grupos!left(*)')
+      .select('*, grupos!left(*), usuarios!created_by(nombre)')
       .eq('sala_id', params.salaId);
 
     if (columnaId) {
@@ -94,6 +94,8 @@ export async function GET(
       columna_id: t.columna_id,
       contenido: t.contenido,
       grupo_id: t.grupo_id,
+      created_by: t.created_by,
+      autor_nombre: (t.usuarios as any)?.nombre || null,
       created_at: t.created_at,
       updated_at: t.updated_at,
       grupo: t.grupos || null,
@@ -195,8 +197,9 @@ export async function POST(
         sala_id: params.salaId,
         columna_id: colId,
         contenido: contenido.trim(),
+        created_by: authUser.id,
       })
-      .select()
+      .select('*, usuarios!created_by(nombre)')
       .single();
 
     if (createError) {

@@ -58,6 +58,9 @@ export function Card({ tarjeta, columnaId, grupoColor, isSelected, onToggleSelec
       onClick={handleSelectClick}
     >
       <p className={styles.content}>{tarjeta.contenido}</p>
+      {tarjeta.autor_nombre && (
+        <span className={styles.author}>{tarjeta.autor_nombre}</span>
+      )}
       {isSelected && <span className={styles.checkBadge}>✓</span>}
       <button
         className={styles.deleteBtn}

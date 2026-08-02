@@ -4,6 +4,8 @@ export interface Tarjeta {
   columna_id: number;  // 1-4
   contenido: string;
   grupo_id: string | null;
+  created_by: string | null;
+  autor_nombre?: string;
   created_at: string;
   updated_at: string;
 }
