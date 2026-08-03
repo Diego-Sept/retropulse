@@ -115,7 +115,7 @@ export default function ConfiguracionPage() {
           <div className={styles.plansGrid}>
             <div className={styles.planOption}>
               <h3>Small Team</h3>
-              <p className={styles.planOptionPrice}>$15/mes</p>
+              <p className={styles.planOptionPrice}>$20.000/mes</p>
               <ul>
                 <li>1 equipo</li>
                 <li>30 clusters IA/mes</li>
@@ -132,7 +132,7 @@ export default function ConfiguracionPage() {
             <div className={`${styles.planOption} ${styles.planOptionFeatured}`}>
               <span className={styles.planBadge}>Recomendado</span>
               <h3>Enterprise</h3>
-              <p className={styles.planOptionPrice}>$49/mes</p>
+              <p className={styles.planOptionPrice}>$100.000/mes</p>
               <ul>
                 <li>10 equipos</li>
                 <li>500 clusters IA/mes</li>

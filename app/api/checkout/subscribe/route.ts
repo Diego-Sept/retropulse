@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     }
 
     const plans: Record<string, { amount: number; name: string; clusters: number; equipos: number }> = {
-      small_team: { amount: 15, name: 'Small Team', clusters: 30, equipos: 1 },
-      enterprise: { amount: 49, name: 'Enterprise', clusters: 500, equipos: 10 },
+      small_team: { amount: 20000, name: 'Small Team', clusters: 30, equipos: 1 },
+      enterprise: { amount: 100000, name: 'Enterprise', clusters: 500, equipos: 10 },
     };
 
     const selectedPlan = plans[plan];
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
           frequency: 1,
           frequency_type: 'months',
           transaction_amount: selectedPlan.amount,
-          currency_id: 'USD',
+          currency_id: 'ARS',
         },
         payer_email: authUser.email,
         back_url: `${appUrl}/dashboard/configuracion`,
