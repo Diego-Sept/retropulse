@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     const selectedPlan = plans[plan];
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+    // Use Subscriptions API (preapproval with pending status)
     const mpResponse = await fetch(`${MP_API}/preapproval`, {
       method: 'POST',
       headers: {
@@ -58,27 +59,23 @@ export async function POST(request: NextRequest) {
     });
 
     const responseText = await mpResponse.text();
-    console.error('[MP Preapproval] Status:', mpResponse.status, 'Body:', responseText);
+    console.error('[MP Preference] Status:', mpResponse.status, 'Body:', responseText.substring(0, 500));
 
     let data: any;
     try { data = JSON.parse(responseText); } catch { data = {}; }
 
     if (!mpResponse.ok) {
       return NextResponse.json(
-        { error: data.message || data.error || `Error MP: ${mpResponse.status}`, mpResponse: data },
-        { status: mpResponse.status > 0 ? mpResponse.status : 502 },
+        { error: data.message || data.error || `Error MP: ${mpResponse.status}` },
+        { status: 502 },
       );
     }
 
     return NextResponse.json({
-      init_point: data.init_point,
-      preapproval_id: data.id,
+      init_point: data.init_point || data.sandbox_init_point,
     });
   } catch (error: any) {
-    console.error('[Checkout] Error:', error.message, error.stack);
-    return NextResponse.json(
-      { error: error.message || 'Error al crear suscripción' },
-      { status: 500 },
-    );
+    console.error('[Checkout] Error:', error.message);
+    return NextResponse.json({ error: 'Error al crear preferencia' }, { status: 500 });
   }
 }
