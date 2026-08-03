@@ -30,23 +30,27 @@ export async function POST(request: NextRequest) {
     const selectedPlan = plans[plan];
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    // Use Subscriptions API (preapproval with pending status)
-    const mpResponse = await fetch(`${MP_API}/preapproval`, {
+    // Use Checkout Pro preference — reliable with test users
+    const mpResponse = await fetch(`${MP_API}/checkout/preferences`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        reason: `RetroPulse — Plan ${selectedPlan.name}`,
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: 'months',
-          transaction_amount: selectedPlan.amount,
+        items: [{
+          title: `RetroPulse — ${selectedPlan.name} (mensual)`,
+          quantity: 1,
+          unit_price: selectedPlan.amount,
           currency_id: 'ARS',
+        }],
+        payer: { email: authUser.email },
+        back_urls: {
+          success: `${appUrl}/dashboard/configuracion?status=success`,
+          failure: `${appUrl}/dashboard/configuracion?status=failure`,
+          pending: `${appUrl}/dashboard/configuracion?status=pending`,
         },
-        payer_email: authUser.email,
-        back_url: `${appUrl}/dashboard/configuracion`,
+        auto_return: 'approved',
         external_reference: JSON.stringify({
           empresa_id: authUser.empresa_id,
           plan,
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
           equipos: selectedPlan.equipos,
           precio: selectedPlan.amount,
         }),
-        status: 'pending',
+        notification_url: `${appUrl}/api/webhooks/mercadopago`,
       }),
     });
 
