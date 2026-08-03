@@ -57,13 +57,16 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    const data = await mpResponse.json();
+    const responseText = await mpResponse.text();
+    console.error('[MP Preapproval] Status:', mpResponse.status, 'Body:', responseText);
+
+    let data: any;
+    try { data = JSON.parse(responseText); } catch { data = {}; }
 
     if (!mpResponse.ok) {
-      console.error('[MP Preapproval] Error:', JSON.stringify(data));
       return NextResponse.json(
-        { error: data.message || data.error || 'Error al crear suscripción' },
-        { status: mpResponse.status },
+        { error: data.message || data.error || `Error MP: ${mpResponse.status}`, mpResponse: data },
+        { status: mpResponse.status > 0 ? mpResponse.status : 502 },
       );
     }
 
