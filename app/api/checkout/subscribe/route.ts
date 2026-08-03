@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
           frequency: 1,
           frequency_type: 'months',
           transaction_amount: selectedPlan.amount,
-          currency_id: 'ARS',
+          currency_id: 'USD',
         },
         payer_email: authUser.email,
         back_url: `${appUrl}/dashboard/configuracion`,
