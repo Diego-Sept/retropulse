@@ -242,3 +242,31 @@
 .upgradeBtnPrimary {
   background: var(--color-accent);
 }
+
+/* ── Payment status banner ── */
+
+.paymentMsg {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin-bottom: var(--space-6);
+}
+
+.paymentSuccess {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.paymentFailure {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+.paymentPending {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
