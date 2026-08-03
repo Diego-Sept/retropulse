@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth-middleware';
-import { getSupabaseServerClient } from '@/lib/supabase-server';
-import { MercadoPagoConfig, PreApproval } from 'mercadopago';
+
+const MP_API = 'https://api.mercadopago.com';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { plan } = body; // 'small_team' | 'enterprise'
+    const { plan } = body;
 
     if (!plan || !['small_team', 'enterprise'].includes(plan)) {
       return NextResponse.json({ error: 'Plan inválido' }, { status: 400 });
@@ -30,12 +30,13 @@ export async function POST(request: NextRequest) {
     const selectedPlan = plans[plan];
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    const client = new MercadoPagoConfig({ accessToken });
-
-    const preapproval = new PreApproval(client);
-
-    const result = await preapproval.create({
-      body: {
+    const mpResponse = await fetch(`${MP_API}/preapproval`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         reason: `RetroPulse — Plan ${selectedPlan.name}`,
         auto_recurring: {
           frequency: 1,
@@ -53,15 +54,25 @@ export async function POST(request: NextRequest) {
           precio: selectedPlan.amount,
         }),
         status: 'pending',
-      },
+      }),
     });
 
+    const data = await mpResponse.json();
+
+    if (!mpResponse.ok) {
+      console.error('[MP Preapproval] Error:', JSON.stringify(data));
+      return NextResponse.json(
+        { error: data.message || data.error || 'Error al crear suscripción' },
+        { status: mpResponse.status },
+      );
+    }
+
     return NextResponse.json({
-      init_point: result.init_point,
-      preapproval_id: result.id,
+      init_point: data.init_point,
+      preapproval_id: data.id,
     });
   } catch (error: any) {
-    console.error('Checkout error:', error);
+    console.error('[Checkout] Error:', error.message, error.stack);
     return NextResponse.json(
       { error: error.message || 'Error al crear suscripción' },
       { status: 500 },
