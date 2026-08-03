@@ -1,36 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
 
+const MP_API = 'https://api.mercadopago.com';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('[MP Webhook]', JSON.stringify(body, null, 2));
+    console.log('[MP Webhook]', JSON.stringify(body).substring(0, 500));
 
-    const type = body.type || body.action;
-    const data = body.data || {};
+    // Checkout Pro sends payment notifications
+    const type = body.type || body.action || '';
+    const paymentId = body.data?.id || body.id || '';
 
-    if (type === 'subscription_preapproval' || type === 'created' || type === 'updated') {
-      // Subscription authorized — user agreed to recurring payments
-      const preapprovalId = data.id || body.preapproval_id;
-      if (!preapprovalId) {
-        return NextResponse.json({ ok: true });
+    if (!paymentId && (type === 'payment' || body.topic === 'payment')) {
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // If we have a payment ID, look it up
+    if (paymentId && body.topic !== 'merchant_order') {
+      const accessToken = process.env.MP_ACCESS_TOKEN;
+      if (!accessToken) {
+        return NextResponse.json({ ok: true }, { status: 200 });
       }
 
-      const externalRef = body.external_reference;
+      const paymentRes = await fetch(`${MP_API}/v1/payments/${paymentId}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      const payment = await paymentRes.json();
+
+      if (payment.status !== 'approved') {
+        console.log('[MP Webhook] Payment not approved:', payment.status);
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+
+      const externalRef = payment.external_reference;
       if (!externalRef) {
-        return NextResponse.json({ ok: true });
+        return NextResponse.json({ ok: true }, { status: 200 });
       }
 
-      const ref = typeof externalRef === 'string' ? JSON.parse(externalRef) : externalRef;
+      let ref: any;
+      try { ref = JSON.parse(externalRef); } catch { ref = null; }
+      if (!ref || !ref.empresa_id) {
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+
       const empresaId = ref.empresa_id;
       const planName = ref.plan === 'small_team' ? 'Small Team' : 'Enterprise';
       const clustersIaMes = ref.clusters;
       const equiposMax = ref.equipos;
       const precio = ref.precio;
-
-      if (!empresaId) {
-        return NextResponse.json({ ok: true });
-      }
 
       const supabase = getSupabaseServerClient();
 
@@ -43,43 +61,38 @@ export async function POST(request: NextRequest) {
 
       if (!plan) {
         console.error('[MP Webhook] Plan not found:', planName);
-        return NextResponse.json({ ok: true });
+        return NextResponse.json({ ok: true }, { status: 200 });
       }
 
-      // Update or create suscripcion
-      const { data: existingSusc } = await supabase
+      // Update suscripcion
+      const { data: existing } = await supabase
         .from('suscripciones')
         .select('id')
         .eq('empresa_id', empresaId)
         .maybeSingle();
 
-      if (existingSusc) {
-        await supabase
-          .from('suscripciones')
-          .update({
-            plan_id: plan.id,
-            equipos_max: equiposMax,
-            clusters_ia_mes: clustersIaMes,
-            precio,
-            estado: 'activa',
-            updated_at: new Date().toISOString(),
-          })
-          .eq('empresa_id', empresaId);
+      if (existing) {
+        await supabase.from('suscripciones').update({
+          plan_id: plan.id,
+          equipos_max: equiposMax,
+          clusters_ia_mes: clustersIaMes,
+          precio,
+          estado: 'activa',
+          updated_at: new Date().toISOString(),
+        }).eq('empresa_id', empresaId);
       } else {
-        await supabase
-          .from('suscripciones')
-          .insert({
-            empresa_id: empresaId,
-            plan_id: plan.id,
-            equipos_max: equiposMax,
-            clusters_ia_mes: clustersIaMes,
-            precio,
-            estado: 'activa',
-            fecha_inicio: new Date().toISOString(),
-          });
+        await supabase.from('suscripciones').insert({
+          empresa_id: empresaId,
+          plan_id: plan.id,
+          equipos_max: equiposMax,
+          clusters_ia_mes: clustersIaMes,
+          precio,
+          estado: 'activa',
+          fecha_inicio: new Date().toISOString(),
+        });
       }
 
-      console.log(`[MP Webhook] Subscription updated: empresa=${empresaId} plan=${planName}`);
+      console.log(`[MP Webhook] Subscription activated: empresa=${empresaId} plan=${planName}`);
     }
 
     return NextResponse.json({ ok: true }, { status: 200 });

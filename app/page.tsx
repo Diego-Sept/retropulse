@@ -200,7 +200,7 @@ export default function LandingPage() {
               <span className={styles.planBadge}>Popular</span>
               <h3 className={styles.planName}>Pro</h3>
               <div className={styles.planPrice}>
-                <span className={styles.planAmount}>$9</span>
+                <span className={styles.planAmount}>$20.000</span>
                 <span className={styles.planPeriod}>/mes</span>
               </div>
               <ul className={styles.planFeatures}>
@@ -214,7 +214,7 @@ export default function LandingPage() {
             <div className={styles.plan}>
               <h3 className={styles.planName}>Enterprise</h3>
               <div className={styles.planPrice}>
-                <span className={styles.planAmount}>$29</span>
+                <span className={styles.planAmount}>$100.000</span>
                 <span className={styles.planPeriod}>/mes</span>
               </div>
               <ul className={styles.planFeatures}>

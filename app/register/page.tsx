@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import styles from './register.module.css';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitacionToken = searchParams.get('invitacion');
@@ -20,7 +20,6 @@ export default function RegisterPage() {
   useEffect(() => {
     if (invitacionToken) {
       setFromInvite(true);
-      // Fetch invitation to pre-fill email
       fetch(`/api/invitaciones/empresa/${invitacionToken}`)
         .then((r) => r.json())
         .then((data) => {
@@ -73,6 +72,9 @@ export default function RegisterPage() {
     <div className={styles.container}>
       <form className={styles.form} onSubmit={handleSubmit}>
         <h1 className={styles.title}>Crear Cuenta</h1>
+        {fromInvite && (
+          <p className={styles.inviteHint}>Estás registrándote por invitación de empresa</p>
+        )}
         {error && <p className={styles.error}>{error}</p>}
         <input
           type="text"
@@ -107,5 +109,13 @@ export default function RegisterPage() {
         </p>
       </form>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }
