@@ -1,12 +1,27 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLimits } from '@/hooks/useLimits';
 import styles from './configuracion.module.css';
 
-export default function ConfiguracionPage() {
+function ConfiguracionContent() {
+  const searchParams = useSearchParams();
+  const paymentStatus = searchParams.get('status');
   const { limits, loading, refetch } = useLimits();
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMsg, setPaymentMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (paymentStatus === 'success') {
+      setPaymentMsg('¡Pago recibido! Tu plan se activará en unos segundos.');
+      refetch();
+    } else if (paymentStatus === 'failure') {
+      setPaymentMsg('El pago fue rechazado. Intentá de nuevo.');
+    } else if (paymentStatus === 'pending') {
+      setPaymentMsg('El pago está pendiente. Te avisaremos cuando se confirme.');
+    }
+  }, [paymentStatus, refetch]);
 
   const handleUpgrade = async (plan: string) => {
     setUpgrading(plan);
@@ -51,6 +66,11 @@ export default function ConfiguracionPage() {
     <div className={styles.container}>
       <h1 className={styles.title}>Configuración</h1>
 
+      {paymentMsg && (
+        <div className={`${styles.paymentMsg} ${paymentStatus === 'success' ? styles.paymentSuccess : paymentStatus === 'failure' ? styles.paymentFailure : styles.paymentPending}`}>
+          {paymentMsg}
+        </div>
+      )}
       {error && (
         <div className={styles.error}>
           {error}
@@ -161,4 +181,9 @@ export default function ConfiguracionPage() {
       )}
     </div>
   );
+}
+
+import { Suspense } from 'react';
+export default function ConfiguracionPage() {
+  return <Suspense><ConfiguracionContent /></Suspense>;
 }
