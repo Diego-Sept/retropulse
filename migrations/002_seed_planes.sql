@@ -1,6 +1,6 @@
 -- Idempotent seed for subscription plans
 INSERT INTO planes_subscription (nombre, descripcion, equipos_max, clusters_ia_mes, salas_max, precio)
-SELECT 'Gratuito', 'Plan gratuito para equipos pequeños. 1 equipo, 2 salas y 5 clusters IA por mes.', 1, 5, 2, 0.00
+SELECT 'Gratuito', 'Plan gratuito para equipos pequeños. 1 equipo, 2 salas y 3 clusters IA por mes.', 1, 3, 2, 0.00
 WHERE NOT EXISTS (SELECT 1 FROM planes_subscription WHERE nombre = 'Gratuito');
 
 INSERT INTO planes_subscription (nombre, descripcion, equipos_max, clusters_ia_mes, salas_max, precio)

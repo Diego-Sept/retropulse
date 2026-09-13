@@ -213,7 +213,7 @@ notificaciones_email -- Log de emails enviados
 |---------|----------|--------------------------|---------------------------|
 | Equipos | 1 | 1 | 10 |
 | Salas activas | 2 | Ilimitadas | Ilimitadas |
-| Agrupación IA/mes | 5 | 30 | 500 |
+| Agrupación IA/mes | 3 | 30 | 500 |
 | Exportación MD/PDF | ✅ | ✅ | ✅ |
 | Soporte prioritario | ❌ | ❌ | ✅ |
 | SSO / Auditoría | ❌ | ❌ | ✅ (roadmap) |
