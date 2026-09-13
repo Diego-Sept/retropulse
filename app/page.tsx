@@ -101,7 +101,7 @@ const testimonials = [
 const faqs = [
   {
     q: '¿Es gratis?',
-    a: 'Sí, el plan Gratuito incluye 1 equipo, salas ilimitadas y 5 agrupaciones con IA por mes. Sin tarjeta.',
+    a: 'Sí, el plan Gratuito incluye 1 equipo, 2 salas activas y 5 agrupaciones con IA por mes. Sin tarjeta.',
   },
   {
     q: '¿Mis datos están seguros?',
@@ -343,7 +343,7 @@ export default function LandingPage() {
               </div>
               <ul className={styles.planFeatures}>
                 <li>1 equipo</li>
-                <li>Salas ilimitadas</li>
+                <li>2 salas activas</li>
                 <li>Exportación MD y PDF</li>
                 <li>Agrupación IA (5/mes)</li>
               </ul>

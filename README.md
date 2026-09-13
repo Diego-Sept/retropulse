@@ -171,7 +171,7 @@ SMTP_FROM="RetroPulse <noreply@tudominio.com>"
 ## Esquema de base de datos
 
 ```sql
-planes_subscription  -- Catálogo: Gratuito, Small Team, Enterprise
+planes_subscription  -- Catálogo: Gratuito, Small Team, Enterprise (equipos_max, salas_max, clusters_ia_mes)
 empresas             -- Multi-tenant: cada organización
 suscripciones        -- Suscripción activa de cada empresa (snapshot de plan)
 usuarios             -- Miembros: email, password_hash, nombre, rol_global
@@ -212,7 +212,7 @@ notificaciones_email -- Log de emails enviados
 | Feature | Gratuito | Small Team ($20.000/mes) | Enterprise ($100.000/mes) |
 |---------|----------|--------------------------|---------------------------|
 | Equipos | 1 | 1 | 10 |
-| Salas | Ilimitadas | Ilimitadas | Ilimitadas |
+| Salas activas | 2 | Ilimitadas | Ilimitadas |
 | Agrupación IA/mes | 5 | 30 | 500 |
 | Exportación MD/PDF | ✅ | ✅ | ✅ |
 | Soporte prioritario | ❌ | ❌ | ✅ |

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
 import { getAuthUser } from '@/lib/auth-middleware';
+import { checkSalasLimit } from '@/lib/planes';
 
 export async function GET(request: NextRequest) {
   try {
@@ -171,6 +172,15 @@ export async function POST(request: NextRequest) {
           { status: 403 },
         );
       }
+    }
+
+    // Check salas limit
+    const salasLimit = await checkSalasLimit(authUser.empresa_id);
+    if (!salasLimit.allowed) {
+      return NextResponse.json(
+        { error: salasLimit.reason || 'Límite de salas alcanzado' },
+        { status: 403 },
+      );
     }
 
     // Create the sala

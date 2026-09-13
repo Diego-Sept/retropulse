@@ -4,6 +4,7 @@ export interface PlanLimits {
   suscripcionId: string;
   planNombre: string;
   equiposMax: number | null;  // null = unlimited
+  salasMax: number | null;    // null = unlimited
   clustersIaMes: number | null;  // null = unlimited
   precio: number;
   estado: string;
@@ -17,7 +18,7 @@ export async function getSuscripcionLimits(empresaId: string): Promise<PlanLimit
   const { data, error } = await supabase
     .from('suscripciones')
     .select(`
-      id, equipos_max, clusters_ia_mes, precio, estado,
+      id, equipos_max, salas_max, clusters_ia_mes, precio, estado,
       precio_proximo, fecha_efectiva_proximo_cambio,
       planes_subscription!inner(nombre)
     `)
@@ -31,6 +32,7 @@ export async function getSuscripcionLimits(empresaId: string): Promise<PlanLimit
     suscripcionId: data.id,
     planNombre: (data.planes_subscription as any).nombre,
     equiposMax: data.equipos_max === 0 ? null : data.equipos_max,
+    salasMax: data.salas_max === 0 ? null : data.salas_max,
     clustersIaMes: data.clusters_ia_mes === 0 ? null : data.clusters_ia_mes,
     precio: data.precio,
     estado: data.estado,
@@ -94,6 +96,34 @@ export async function checkTeamLimit(empresaId: string): Promise<{ allowed: bool
   return {
     allowed,
     reason: allowed ? undefined : `Tu plan actual permite solo ${limits.equiposMax} equipo${limits.equiposMax === 1 ? '' : 's'}. Actualiza tu plan para crear más.`,
+  };
+}
+
+export async function checkSalasLimit(empresaId: string): Promise<{ allowed: boolean; reason?: string }> {
+  const supabase = getSupabaseServerClient();
+  const limits = await getSuscripcionLimits(empresaId);
+
+  if (!limits) {
+    return { allowed: false, reason: 'Suscripción no encontrada' };
+  }
+
+  if (limits.salasMax === null) {
+    return { allowed: true }; // unlimited
+  }
+
+  // Count active salas only (archived don't count against the limit)
+  // salas belongs to equipos which belong to the empresa
+  const { count } = await supabase
+    .from('salas')
+    .select('id, equipos!inner(empresa_id)', { count: 'exact', head: true })
+    .eq('equipos.empresa_id', empresaId)
+    .eq('estado', 'activa');
+
+  const allowed = (count ?? 0) < limits.salasMax;
+
+  return {
+    allowed,
+    reason: allowed ? undefined : `Tu plan gratuito permite hasta ${limits.salasMax} salas activas. Archivá una o actualizá tu plan para crear más.`,
   };
 }
 
