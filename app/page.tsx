@@ -357,9 +357,9 @@ export default function LandingPage() {
               </div>
               <ul className={styles.planFeatures}>
                 <li>1 equipo</li>
-                <li>Salas ilimitadas</li>
+                <li>10 salas activas</li>
                 <li>Exportación MD y PDF</li>
-                <li>Agrupación IA (30/mes)</li>
+                <li>Agrupación IA (20/mes)</li>
               </ul>
               <Link href="/register" className={`${styles.planBtn} ${styles.planBtnPrimary}`}>Elegir Small Team</Link>
             </div>

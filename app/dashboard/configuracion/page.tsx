@@ -138,7 +138,8 @@ function ConfiguracionContent() {
               <p className={styles.planOptionPrice}>$20.000/mes</p>
               <ul>
                 <li>1 equipo</li>
-                <li>30 clusters IA/mes</li>
+                <li>10 salas activas</li>
+                <li>20 clusters IA/mes</li>
                 <li>Exportación MD y PDF</li>
               </ul>
               <button

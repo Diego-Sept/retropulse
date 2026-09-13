@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Configuración de pago no disponible' }, { status: 500 });
     }
 
-    const plans: Record<string, { amount: number; name: string; clusters: number; equipos: number }> = {
-      small_team: { amount: 20000, name: 'Small Team', clusters: 30, equipos: 1 },
-      enterprise: { amount: 100000, name: 'Enterprise', clusters: 500, equipos: 10 },
+    const plans: Record<string, { amount: number; name: string; clusters: number; equipos: number; salas: number }> = {
+      small_team: { amount: 20000, name: 'Small Team', clusters: 20, equipos: 1, salas: 10 },
+      enterprise: { amount: 100000, name: 'Enterprise', clusters: 500, equipos: 10, salas: 0 }, // 0 = unlimited
     };
 
     const selectedPlan = plans[plan];
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
           plan,
           clusters: selectedPlan.clusters,
           equipos: selectedPlan.equipos,
+          salas: selectedPlan.salas,
           precio: selectedPlan.amount,
         }),
         notification_url: `${appUrl}/api/webhooks/mercadopago`,

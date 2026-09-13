@@ -212,8 +212,8 @@ notificaciones_email -- Log de emails enviados
 | Feature | Gratuito | Small Team ($20.000/mes) | Enterprise ($100.000/mes) |
 |---------|----------|--------------------------|---------------------------|
 | Equipos | 1 | 1 | 10 |
-| Salas activas | 2 | Ilimitadas | Ilimitadas |
-| Agrupación IA/mes | 3 | 30 | 500 |
+| Salas activas | 2 | 10 | Ilimitadas |
+| Agrupación IA/mes | 3 | 20 | 500 |
 | Exportación MD/PDF | ❌ | ✅ | ✅ |
 | Soporte prioritario | ❌ | ❌ | ✅ |
 | SSO / Auditoría | ❌ | ❌ | ✅ (roadmap) |

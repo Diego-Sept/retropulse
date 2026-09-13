@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       const planName = ref.plan === 'small_team' ? 'Small Team' : 'Enterprise';
       const clustersIaMes = ref.clusters;
       const equiposMax = ref.equipos;
+      const salasMax = ref.salas ?? 0;
       const precio = ref.precio;
 
       const supabase = getSupabaseServerClient();
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
         await supabase.from('suscripciones').update({
           plan_id: plan.id,
           equipos_max: equiposMax,
+          salas_max: salasMax,
           clusters_ia_mes: clustersIaMes,
           precio,
           estado: 'activa',
@@ -85,6 +87,7 @@ export async function POST(request: NextRequest) {
           empresa_id: empresaId,
           plan_id: plan.id,
           equipos_max: equiposMax,
+          salas_max: salasMax,
           clusters_ia_mes: clustersIaMes,
           precio,
           estado: 'activa',

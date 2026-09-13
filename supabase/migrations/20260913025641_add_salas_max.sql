@@ -4,9 +4,9 @@ ALTER TABLE suscripciones ADD COLUMN IF NOT EXISTS salas_max INT NOT NULL DEFAUL
 ALTER TABLE planes_subscription ADD COLUMN IF NOT EXISTS exportacion BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE suscripciones ADD COLUMN IF NOT EXISTS exportacion BOOLEAN NOT NULL DEFAULT false;
 
--- Update existing plans: Free = 2 salas + 3 clusters IA + no export, paid = unlimited + export
+-- Update existing plans: Free = 2 salas + 3 clusters IA + no export, paid = export
 UPDATE planes_subscription SET salas_max = 2, clusters_ia_mes = 3, exportacion = false WHERE nombre = 'Gratuito';
-UPDATE planes_subscription SET salas_max = 0, exportacion = true WHERE nombre = 'Small Team';
+UPDATE planes_subscription SET salas_max = 10, clusters_ia_mes = 20, exportacion = true WHERE nombre = 'Small Team';
 UPDATE planes_subscription SET salas_max = 0, exportacion = true WHERE nombre = 'Enterprise';
 
 -- Sync existing suscripciones snapshots from their plan
