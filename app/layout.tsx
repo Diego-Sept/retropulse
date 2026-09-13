@@ -12,8 +12,23 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'RetroPulse',
-  description: 'Retrospectivas Scrum colaborativas en tiempo real',
+  title: 'RetroPulse — Retrospectivas Scrum colaborativas en tiempo real',
+  description:
+    'Herramienta de retrospectiva ágil para equipos Scrum. Tablero en tiempo real, agrupación de ideas con IA y exportación en PDF. Gratis para empezar.',
+  keywords: [
+    'retrospectiva scrum', 'retrospectiva ágil', 'herramienta retrospectiva',
+    'tablero retrospectiva', 'retro sprint', 'scrum retrospective español',
+    'retrospectiva online', 'mejora continua equipo',
+  ],
+  openGraph: {
+    title: 'RetroPulse — Retrospectivas Scrum en tiempo real',
+    description: 'Colaborá, agrupá ideas con IA y exportá resultados. Gratis para empezar.',
+    type: 'website',
+    locale: 'es_AR',
+    siteName: 'RetroPulse',
+  },
+  robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
 };
 
 export const viewport: Viewport = {

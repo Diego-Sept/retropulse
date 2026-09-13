@@ -551,6 +551,237 @@
   margin: 0;
 }
 
+/* ── Hero meta (checkmarks) ── */
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  font-size: 0.875rem;
+  color: var(--landing-text-muted);
+}
+
+/* ── Social proof bar ── */
+.socialProof {
+  background: var(--landing-card-bg);
+  border-top: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: var(--space-5) var(--space-8);
+}
+
+.socialProofInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.socialProofItem {
+  font-size: 0.9375rem;
+  color: var(--landing-text-muted);
+}
+
+.socialProofItem strong {
+  color: var(--landing-text);
+  font-weight: 700;
+}
+
+/* ── Problema → Solución ── */
+.problemSolution {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+.problemCard,
+.solutionCard {
+  background: var(--landing-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.problemCard h3 {
+  color: var(--color-danger);
+  margin: 0 0 var(--space-4);
+  font-size: 1.125rem;
+}
+
+.solutionCard h3 {
+  color: var(--color-success);
+  margin: 0 0 var(--space-4);
+  font-size: 1.125rem;
+}
+
+.problemCard ul,
+.solutionCard ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.problemCard li,
+.solutionCard li {
+  padding: var(--space-2) 0;
+  font-size: 0.9375rem;
+  color: var(--landing-text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.problemCard li::before {
+  content: '✗';
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.solutionCard li::before {
+  content: '✓';
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+/* ── Integraciones ── */
+.integrations {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+
+.integration {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--landing-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--landing-text);
+}
+
+.integrationIcon {
+  font-size: 1.25rem;
+}
+
+/* ── Testimonios ── */
+.testimonials {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+
+.testimonial {
+  background: var(--landing-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.testimonialQuote {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--landing-text);
+  margin: 0;
+  flex: 1;
+}
+
+.testimonialAuthor {
+  display: flex;
+  flex-direction: column;
+}
+
+.testimonialAuthor strong {
+  font-size: 0.9375rem;
+  color: var(--landing-text);
+}
+
+.testimonialAuthor span {
+  font-size: 0.8125rem;
+  color: var(--landing-text-muted);
+}
+
+/* ── FAQ ── */
+.faqs {
+  max-width: 720px;
+  margin: var(--space-8) auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.faq {
+  background: var(--landing-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+}
+
+.faqQ {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--landing-text);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faqQ::after {
+  content: '+';
+  font-size: 1.25rem;
+  color: var(--color-accent);
+}
+
+.faq[open] .faqQ::after {
+  content: '−';
+}
+
+.faqA {
+  margin: var(--space-3) 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--landing-text-muted);
+}
+
+/* ── Plan payment note ── */
+.planPaymentNote {
+  text-align: center;
+  margin-top: var(--space-6);
+  font-size: 0.9375rem;
+  color: var(--landing-text-muted);
+}
+
+/* ── Footer nav ── */
+.footerNav {
+  display: flex;
+  gap: var(--space-4);
+  font-size: 0.875rem;
+}
+
+.footerNav a {
+  color: var(--landing-text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footerNav a:hover {
+  color: var(--landing-text);
+}
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .hero {
@@ -625,6 +856,24 @@
 
   .heroCta {
     flex-direction: column;
+  }
+
+  .socialProof {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .socialProofInner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .problemSolution {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonials {
+    grid-template-columns: 1fr;
   }
 
   .footerInner {
