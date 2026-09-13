@@ -1,5 +1,6 @@
 'use client';
 import { useBoard } from '@/contexts/BoardContext';
+import { useLimits } from '@/hooks/useLimits';
 import { generateMarkdown, downloadMarkdown } from '@/lib/markdown';
 import styles from './ExportMenu.module.css';
 
@@ -19,6 +20,18 @@ interface ExportMenuProps {
 
 export function ExportMenu({ salaNombre }: ExportMenuProps) {
   const { state } = useBoard();
+  const { limits } = useLimits();
+
+  const isFreePlan = limits?.suscripcion?.plan?.nombre === 'Gratuito';
+  if (isFreePlan) {
+    return (
+      <div className={styles.menu}>
+        <span className={styles.lockedHint} title="La exportación está disponible en planes pagos">
+          🔒 Export
+        </span>
+      </div>
+    );
+  }
 
   const handleExportMd = () => {
     const md = generateMarkdown(salaNombre, state.columnas, state.grupos);

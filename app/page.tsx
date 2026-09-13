@@ -117,7 +117,7 @@ const faqs = [
   },
   {
     q: '¿Puedo exportar los resultados?',
-    a: 'Sí, Markdown y PDF con un clic, con el autor de cada tarjeta. Listo para compartir.',
+    a: 'Sí, Markdown y PDF con un clic, con el autor de cada tarjeta. La exportación está incluida en los planes pagos.',
   },
   {
     q: '¿Cómo funciona la agrupación con IA?',
@@ -344,7 +344,6 @@ export default function LandingPage() {
               <ul className={styles.planFeatures}>
                 <li>1 equipo</li>
                 <li>2 salas activas</li>
-                <li>Exportación MD y PDF</li>
                 <li>Agrupación IA (3/mes)</li>
               </ul>
               <Link href="/register" className={styles.planBtn}>Empezar gratis</Link>
@@ -373,6 +372,7 @@ export default function LandingPage() {
               <ul className={styles.planFeatures}>
                 <li>10 equipos</li>
                 <li>Salas ilimitadas</li>
+                <li>Exportación MD y PDF</li>
                 <li>Agrupación IA (500/mes)</li>
                 <li>Soporte prioritario</li>
               </ul>

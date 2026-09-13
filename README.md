@@ -171,7 +171,7 @@ SMTP_FROM="RetroPulse <noreply@tudominio.com>"
 ## Esquema de base de datos
 
 ```sql
-planes_subscription  -- Catálogo: Gratuito, Small Team, Enterprise (equipos_max, salas_max, clusters_ia_mes)
+planes_subscription  -- Catálogo: Gratuito, Small Team, Enterprise (equipos_max, salas_max, clusters_ia_mes, exportacion)
 empresas             -- Multi-tenant: cada organización
 suscripciones        -- Suscripción activa de cada empresa (snapshot de plan)
 usuarios             -- Miembros: email, password_hash, nombre, rol_global
@@ -214,7 +214,7 @@ notificaciones_email -- Log de emails enviados
 | Equipos | 1 | 1 | 10 |
 | Salas activas | 2 | Ilimitadas | Ilimitadas |
 | Agrupación IA/mes | 3 | 30 | 500 |
-| Exportación MD/PDF | ✅ | ✅ | ✅ |
+| Exportación MD/PDF | ❌ | ✅ | ✅ |
 | Soporte prioritario | ❌ | ❌ | ✅ |
 | SSO / Auditoría | ❌ | ❌ | ✅ (roadmap) |
 
@@ -312,9 +312,10 @@ RetroPulse usa **Checkout Pro** (preferencia de pago) para las suscripciones men
 - Límite mensual por plan (contador RPC atómico)
 - Agrupación manual como fallback
 
-### Exportación
+### Exportación (premium)
 - **Markdown**: organizado por columnas y grupos, con autor en cada tarjeta
 - **PDF**: generado con jsPDF, autor en gris bajo cada tarjeta
+- Disponible solo en planes pagos — el plan gratuito muestra el botón bloqueado
 
 ### Gestión de usuarios e invitaciones
 - Admin crea usuarios dentro de su empresa (sin que creen empresa propia)
